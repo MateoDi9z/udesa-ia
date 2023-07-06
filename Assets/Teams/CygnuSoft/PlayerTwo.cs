@@ -11,7 +11,7 @@ namespace Teams.CynuSoftTeam
         public override void OnUpdate()
         {
             GoToBase();
-            
+
             Vector3 ballPosition = GetBallPosition();
             if (Vector3.Distance(ballPosition, GetMyGoalPosition()) < 5)
             {
@@ -30,9 +30,36 @@ namespace Teams.CynuSoftTeam
 
         }
 
+        public PlayerData GetDelantero()
+        {
+            var team = GetTeamMatesInformation();
+
+            
+            var max = 0;
+            for (int i = 0; i < team.Count; i++)
+            {
+                if (
+                    Vector3.Distance(
+                        GetBallPosition(),
+                        team[i].Position
+                    )
+                    >
+                    Vector3.Distance(
+                        GetBallPosition(),
+                        team[max].Position
+                        )
+                    )
+                {
+                    max = i;
+                }
+            }
+
+            return team[max];
+        }
+
         public void PaseAMessi()
         {
-            var messi = GetTeamMatesInformation()[2].Position;
+            var messi = GetDelantero().Position;
 
             if (Libre(messi))
             {

@@ -17,7 +17,9 @@ namespace Teams.CynuSoftTeam
         {
             //Saque();
             // Debug.DrawLine(GetRivalGoalPosition(), GetPosition(), Color.magenta, 0.2f);
+            MoveBy(GetDirectionTo(GetBallPosition()));
             Shoot();
+            var ballPosition = GetBallPosition();
         }
 
         public void GoToBall()
@@ -26,20 +28,79 @@ namespace Teams.CynuSoftTeam
             GoTo(ballPosition);
         }
 
-        public void Shoot()
-        {
-            MoveBy(GetDirectionTo(GetBallPosition()));
+        public void Shoot() {
             var arqueroPostition = getArquero();
             var goalPosition = GetRivalGoalPosition();
 
-            Vector3 shootTo;
-            if (arqueroPostition.Position.z >= 0)
-                shootTo = goalPosition + new Vector3(0, 0, 1.7f);
-            else
-                shootTo = goalPosition + new Vector3(0, 0, -1.7f);
+            if (Libre(goalPosition) || Vector3.Distance(GetBallPosition(), goalPosition) < 8.0f)
+            {
+                Vector3 shootTo;
+                if (arqueroPostition.Position.z >= 0)
+                    shootTo = goalPosition + new Vector3(0, 0, 1.7f);
+                else
+                    shootTo = goalPosition + new Vector3(0, 0, -1.7f);
 
-            Debug.DrawLine(shootTo, GetPosition(), Color.magenta, 0.2f);
-            ShootBall(GetDirectionTo(shootTo), ShootForce.High);
+                if (Libre(shootTo))
+                {
+                    Debug.DrawLine(shootTo, GetPosition(), Color.green, 0.2f);
+                    Debug.Log("Messi tira.");
+                    ShootBall(GetDirectionTo(shootTo), ShootForce.High);
+                    return;
+                }
+
+                Debug.DrawLine(shootTo, GetPosition(), Color.red, 0.2f);
+            } else
+            {
+                Pase();
+            }
+        }
+
+        public void Pase()
+        {
+            var team = GetTeamMatesInformation();
+
+            int defensa = 0;
+            for (int i = 0; i < team.Count; i++)
+            {
+                if (
+                    Vector3.Distance(
+                        GetBallPosition(), 
+                        team[i].Position
+                    ) 
+                    < 
+                    Vector3.Distance(
+                        GetBallPosition(), 
+                        team[defensa].Position
+                        )
+                    )
+                {
+                    defensa = i;
+                }
+            }
+
+            ShootBall(team[defensa].Position, ShootForce.Medium);
+        }
+
+        public bool Libre(Vector3 destino)
+        {
+            bool libre = true;
+            var rivales = GetRivalsInformation();
+            var m = GetPendiente(GetPosition(), destino);
+
+            rivales.ForEach((rival) =>
+            {
+                if (Mathf.RoundToInt(m * rival.Position.x) == Mathf.RoundToInt(rival.Position.z))
+                {
+                    libre = false;
+                }
+            });
+
+            return libre;
+        }
+
+        public float GetPendiente(Vector3 A, Vector3 B)
+        {
+            return (A.z - B.z) / (A.x - B.x);
         }
 
         public PlayerData getArquero()
